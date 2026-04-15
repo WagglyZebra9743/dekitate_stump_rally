@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}スタンプ一覧 | {% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">スタンプ攻略状況</h2>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle bg-white" id="stampTable">
+    <thead class="table-dark">
+        <tr>
+            <th onclick="sortTable(0)" style="cursor:pointer">名称 <i class="bi bi-sort-alpha-down"></i></th>
+            <th onclick="sortTable(1)" style="cursor:pointer" class="text-center">状態</th>
+            <th onclick="sortTable(2)" style="cursor:pointer" class="text-center">達成率 <i class="bi bi-percent"></i></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stamp in stamps %}
+        <tr class="stamp-row" 
+            style="cursor:pointer"
+            data-name="{{ stamp.name }}"
+            data-desc="{{ stamp.description }}"
+            data-world="{{ stamp.get_world_display }}"
+            data-coords="{{ stamp.x }}, {{ stamp.y }}, {{ stamp.z }}"
+            data-pressed="{{ stamp.is_pressed|yesno:'true,false' }}"
+            data-hidden="{{ stamp.is_hidden|yesno:'true,false' }}"
+            data-count="{{ stamp.pressed_count }}"
+            data-ratio="{{ stamp.ratio }}">
+            
+            <td>
+                {% if stamp.is_hidden %}<i class="bi bi-incognito text-muted me-1"></i>{% endif %}
+                {{ stamp.name }}
+            </td>
+            
+            <td class="text-center">
+                {% if stamp.is_pressed %}
+                    <span class="badge bg-success">CLEAR</span>
+                {% else %}
+                    <span class="badge bg-light text-secondary border">未踏</span>
+                {% endif %}
+            </td>
+            
+            <td class="text-center fw-bold">{{ stamp.ratio }}%</td>
+            
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="m_name"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="m_desc"></p>
+                <hr>
+                <div id="m_coords_area">
+                    <p class="mb-1 text-muted small">座標</p>
+                    <p class="fw-bold"><i class="bi bi-geo-alt"></i> <span id="m_world"></span> (<span id="m_coords"></span>)</p>
+                </div>
+                <div class="alert alert-light border d-flex justify-content-between align-items-center mb-0">
+                    <span>この場所を訪れた人</span>
+                    <span class="fw-bold"><span id="m_count"></span>人 (<span id="m_ratio"></span>%)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // 全てのスタンプ行にクリックイベントを設定
+        const rows = document.querySelectorAll('.stamp-row');
+        rows.forEach(row => {
+            row.addEventListener('click', function() {
+                const d = this.dataset; // data-属性をすべて取得
+            
+                document.getElementById('m_name').innerText = d.name;
+                // 改行をブラウザ表示用に変換してセット
+                document.getElementById('m_desc').innerText = d.desc;
+                document.getElementById('m_world').innerText = d.world;
+                document.getElementById('m_count').innerText = d.count;
+                document.getElementById('m_ratio').innerText = d.ratio;
+
+                const coordsArea = document.getElementById('m_coords_area');
+                if (d.hidden === 'true' && d.pressed === 'false') {
+                    coordsArea.style.display = 'none';
+                } else {
+                    coordsArea.style.display = 'block';
+                    document.getElementById('m_coords').innerText = d.coords;
+                }
+                new bootstrap.Modal(document.getElementById('detailModal')).show();
+            });
+        });
+    });
+// 詳細表示ロジック
+function showDetail(name, desc, world, coords, isPressed, isHidden, count, ratio) {
+    document.getElementById('m_name').innerText = name;
+    document.getElementById('m_desc').innerHTML = desc;
+    document.getElementById('m_world').innerText = world;
+    document.getElementById('m_count').innerText = count;
+    document.getElementById('m_ratio').innerText = ratio;
+
+    const coordsArea = document.getElementById('m_coords_area');
+    // 隠しスタンプかつ未達成の場合は座標を隠す
+    if (isHidden === 'true' && isPressed === 'false') {
+        coordsArea.style.display = 'none';
+    } else {
+        coordsArea.style.display = 'block';
+        document.getElementById('m_coords').innerText = coords;
+    }
+
+    new bootstrap.Modal(document.getElementById('detailModal')).show();
+}
+
+// 簡単なテーブルソート機能
+function sortTable(n) {
+    var table = document.getElementById("stampTable");
+    var rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    switching = true; dir = "asc";
+    while (switching) {
+        switching = false; rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            let xVal = x.innerText.toLowerCase();
+            let yVal = y.innerText.toLowerCase();
+            if (n === 2) { // ％列は数値として比較
+                xVal = parseFloat(xVal); yVal = parseFloat(yVal);
+            }
+            if (dir == "asc") {
+                if (xVal > yVal) { shouldSwitch = true; break; }
+            } else if (dir == "desc") {
+                if (xVal < yVal) { shouldSwitch = true; break; }
+            }
+        }
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true; switchcount ++;
+        } else {
+            if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; }
+        }
+    }
+}
+</script>
+{% endblock %}

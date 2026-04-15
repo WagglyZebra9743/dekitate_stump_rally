@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}スタンプ追加| {% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>スタンプ場所の登録</h2>
+    <div class="card p-4 mt-3">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold">スタンプ名称</label>
+                {{ form.name }}
+            </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">説明文</label>
+            {{ form.description }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">ワールド</label>
+            {{ form.world }}
+        </div>
+        <label class="form-label fw-bold">座標と半径</label>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-secondary text-white">X</span>
+                    {{ form.x }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-secondary text-white">Y</span>
+                    {{ form.y }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-secondary text-white">Z</span>
+                    {{ form.z }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-info text-dark">半径</span>
+                    {{ form.radius }}
+                </div>
+            </div>
+        </div>
+        <div class="form-check mb-4">
+            {{ form.is_hidden }}
+            <label class="form-check-label text-danger fw-bold">隠しスタンプにする</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">確認画面へ</button>
+    </form>
+    </div>
+</div>
+{% endblock %}

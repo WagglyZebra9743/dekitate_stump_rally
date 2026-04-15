@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center mt-5">
+
+    {% if messages %}
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-6">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show text-start shadow-sm" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <h1>ようこそ！できたてスタンプラリーへ</h1>
+    <p class="mt-3 text-secondary">サバイバルでスタンプの場所に立ち、MCIDを入力してスタンプを押そう！</p>
+
+    <div class="card mx-auto mt-4 shadow" style="max-width: 500px; border-top: 4px solid #198754;">
+        <div class="card-body p-4">
+            <h3 class="card-title fw-bold mb-4"><i class="bi bi-geo-alt text-success"></i> スタンプを押す</h3>
+            
+            <form method="post" action="{% url 'index' %}">
+                {% csrf_token %}
+                <div class="mb-4 text-start">
+                    <label for="mcid" class="form-label fw-bold">Minecraft ID (MCID)</label>
+                    <input type="text" class="form-control form-control-lg bg-light" id="mcid" name="mcid" value="{{ saved_mcid }}" placeholder="例: WagglyZebra9743" required>
+                    <div class="form-text">大文字・小文字は区別されません。</div>
+                </div>
+                
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
+                    今いる場所でスタンプを押す！
+                </button>
+            </form>
+            
+        </div>
+    </div>
+    
+    <div class="mt-5">
+        <a href="{% url 'play' %}" class="btn btn-outline-secondary rounded-pill px-4">遊び方を見る</a>
+    </div>
+
+</div>
+{% if nearby_stamps %}
+    <div class="position-fixed bottom-0 start-0 p-3" style="z-index: 1050; max-width: 350px;">
+        <div class="card shadow-lg border-warning">
+            <div class="card-header bg-warning text-dark fw-bold py-2">
+                <i class="bi bi-geo"></i> 近くのスタンプ
+            </div>
+            <div class="list-group list-group-flush">
+                {% for ns in nearby_stamps %}
+                <button type="button" class="list-group-item list-group-item-action nearby-btn"
+                    data-name="{{ ns.name }}" data-desc="{{ ns.desc }}"
+                    data-world="{{ ns.world }}" data-coords="{{ ns.coords }}"
+                    data-hidden="{{ ns.is_hidden|yesno:'true,false' }}"
+                    data-pressed="false"> <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">{% if ns.is_hidden %}<i class="bi bi-incognito text-muted"></i> {% endif %}{{ ns.name }}</span>
+                        <span class="badge bg-secondary rounded-pill">距離:{{ ns.distance }}ブロック</span>
+                    </div>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="m_name"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="m_desc"></p>
+                    <hr>
+                    <div id="m_coords_area">
+                        <p class="mb-1 text-muted small">座標</p>
+                        <p class="fw-bold"><i class="bi bi-geo-alt text-danger"></i> <span id="m_world"></span> (<span id="m_coords"></span>)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btns = document.querySelectorAll('.nearby-btn');
+        btns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const d = this.dataset;
+                document.getElementById('m_name').innerText = d.name;
+                document.getElementById('m_desc').innerText = d.desc;
+                document.getElementById('m_world').innerText = d.world;
+
+                const coordsArea = document.getElementById('m_coords_area');
+                // 隠しスタンプかつ未取得の場合は座標を隠す
+                if (d.hidden === 'true' && d.pressed === 'false') {
+                    coordsArea.style.display = 'none';
+                } else {
+                    coordsArea.style.display = 'block';
+                    document.getElementById('m_coords').innerText = d.coords;
+                }
+                new bootstrap.Modal(document.getElementById('detailModal')).show();
+            });
+        });
+    });
+    </script>
+{% endblock %}

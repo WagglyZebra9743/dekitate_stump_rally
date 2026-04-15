@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}スタンプ確認| {% endblock %}
+{% block content %}
+<div class="container mt-5">
+<h2>登録内容の確認</h2>
+    <div class="card p-4 mt-3 border-warning">
+        <table class="table">
+            <tr><th>名称</th><td>{{ form.cleaned_data.name }}</td></tr>
+            <tr><th>説明</th><td>{{ form.cleaned_data.description|linebreaksbr }}</td></tr>
+            <tr><th>ワールド</th><td>{{ form.cleaned_data.world }}</td></tr>
+            <tr><th>座標</th><td>X: {{ form.cleaned_data.x }} / Y: {{ form.cleaned_data.y }} / Z: {{ form.cleaned_data.z }}</td></tr>
+            <tr><th>半径</th><td>{{ form.cleaned_data.radius }} ブロック</td></tr>
+            <tr><th>隠し設定</th><td>{% if form.cleaned_data.is_hidden %}はい{% else %}いいえ{% endif %}</td></tr>
+        </table>
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="bi bi-map-fill"></i> 座標は合っていますか？
+            <a href="{{ dynmap_url }}" target="_blank" rel="noopener noreferrer" class="fw-bold alert-link ms-2">
+                Dynmap (Webmap) で場所を確認する
+            </a>
+        </div>
+        <form method="post" class="d-flex justify-content-between mt-4">
+            {% csrf_token %}
+            <div class="d-none">
+                {{ form.name }} {{ form.description }} {{ form.world }} 
+                {{ form.x }} {{ form.y }} {{ form.z }} {{ form.radius }} {{ form.is_hidden }}
+            </div>
+            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">修正する</button>
+            <button type="submit" name="confirm" class="btn btn-success">この内容で登録する</button>
+        </form>
+    </div>
+</div>
+    {% endblock %}

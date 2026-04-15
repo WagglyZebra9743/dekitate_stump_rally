@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}マイページ | {% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    
+    <div class="card shadow-sm mb-4 border-top border-warning border-4">
+        <div class="card-body text-center p-5">
+            <h2 class="fw-bold text-dark mb-3">{{ player.last_known_name }}</h2>
+            
+            <div class="display-3 text-warning fw-bold mb-3">
+                <i class="bi bi-p-circle-fill"></i>{{ player.points }} <span class="fs-4 text-muted">pt</span>
+            </div>
+            
+            {% if player.user %}
+                <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">
+                    <i class="bi bi-discord"></i> Discord連携済み
+                </span>
+            {% else %}
+                <span class="badge bg-secondary fs-6 px-3 py-2 rounded-pill shadow-sm">
+                    Discord未連携
+                </span>
+                <p class="text-muted small mt-2">※WebサイトからDiscordログインすると自動で連携されます</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h4 class="card-title fw-bold border-bottom pb-2 mb-4">
+                <i class="bi bi-trophy text-warning"></i> ランキング情報
+            </h4>
+            
+            <div class="text-center mb-4">
+                <p class="text-muted mb-1">現在のあなたの順位</p>
+                <h1 class="display-4 fw-bold text-dark"><span class="text-danger">{{ rank }}</span> 位</h1>
+            </div>
+            
+            <div class="row text-center bg-light rounded p-3 mx-2">
+                <div class="col-6 border-end">
+                    <p class="text-muted small mb-1">1つ上の順位のポイント</p>
+                    <div class="fs-5 fw-bold text-dark">
+                        <i class="bi bi-caret-up-fill text-success"></i> 
+                        {{ upper_points }} pt
+                    </div>
+                </div>
+                <div class="col-6">
+                    <p class="text-muted small mb-1">1つ下の順位のポイント</p>
+                    <div class="fs-5 fw-bold text-dark">
+                        <i class="bi bi-caret-down-fill text-danger"></i> 
+                        {{ lower_points }} pt
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h4 class="card-title fw-bold border-bottom pb-2 mb-4">
+                <i class="bi bi-journal-check text-success"></i> 獲得済みスタンプ一覧
+            </h4>
+            
+            {% if stamp_logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>スタンプ名</th>
+                                <th>初回発見日時</th>
+                                <th>最終取得日時</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in stamp_logs %}
+                            <tr>
+                                <td class="fw-bold text-success">
+                                    {% if log.stamp.is_hidden %}
+                                        <i class="bi bi-incognito text-muted me-1" title="隠しスタンプ"></i>
+                                    {% endif %}
+                                    {{ log.stamp.name }}
+                                </td>
+                                <td class="text-muted">{{ log.first_pressed_at|date:"Y/m/d H:i" }}</td>
+                                <td class="text-muted">{{ log.last_pressed_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-map text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3 fw-bold">まだスタンプを獲得していません。</p>
+                    <p class="text-muted small">サーバーにログインして、最初のスタンプを探しに行きましょう！</p>
+                </div>
+            {% endif %}
+            
+        </div>
+    </div>
+
+</div>
+{% endblock %}
