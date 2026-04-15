@@ -77,3 +77,24 @@ class StampLog(models.Model):
     def __str__(self):
         # mcid ではなく、last_known_name（最新のMCID）を表示するように変更
         return f"{self.player.last_known_name} -> {self.stamp.name}"
+    
+class SystemSetting(models.Model):
+    # イベント参加可能期間
+    event_start_at = models.DateTimeField('イベント開始日時', null=True, blank=True)
+    event_end_at = models.DateTimeField('イベント終了日時', null=True, blank=True)
+    
+    # スタンプ追加可能期間
+    stamp_add_start_at = models.DateTimeField('スタンプ追加開始日時', null=True, blank=True)
+    stamp_add_end_at = models.DateTimeField('スタンプ追加終了日時', null=True, blank=True)
+
+    class Meta:
+        verbose_name = "システム設定"
+        verbose_name_plural = "システム設定"
+
+    # ★重要：常に1つのデータ（ID=1）しか保存させない仕組み
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return "イベント期間・システム設定"

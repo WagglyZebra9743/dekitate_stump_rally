@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import RelatedOnlyFieldListFilter
-from .models import Stamp,Player, StampLog
+from .models import Stamp,Player, StampLog,SystemSetting
 
 @admin.register(Stamp)
 class StampAdmin(admin.ModelAdmin):
@@ -40,3 +40,21 @@ class StampLogAdmin(admin.ModelAdmin):
     @admin.display(description='プレイヤー')
     def get_player_name(self, obj):
         return obj.player.last_known_name
+
+@admin.register(SystemSetting)
+class SystemSettingAdmin(admin.ModelAdmin):
+    list_display=('__str__','event_start_at','event_end_at','stamp_add_start_at','stamp_add_end_at')
+    # すでに設定データが存在する場合は、新しいデータを追加させない
+    def has_add_permission(self, request):
+        if SystemSetting.objects.exists():
+            return False
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        context.update({
+            'show_save_and_add_another': False, # 「続けて追加する」を非表示にする！
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)

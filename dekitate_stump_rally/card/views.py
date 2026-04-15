@@ -6,7 +6,7 @@ import requests
 import math
 import time
 from django.utils import timezone
-from .models import Stamp, Player, StampLog
+from .models import Stamp, Player, StampLog, SystemSetting
 from django.contrib import messages
 from .utils import get_minecraft_data
 from all_log.register import register_info_log,register_create_log,register_error_log,register_warn_log
@@ -22,6 +22,25 @@ def index(request):
             register_error_log('スタンプ',"処理中止:mcid未入力","","スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,nothing")
             return redirect('index')
         
+        #キャッシュにmcidを保存
+        request.session['saved_mcid'] = mcid
+
+        setting = SystemSetting.objects.first()
+        now = timezone.now() # 現在時刻を取得
+
+        if setting:
+            # 開始時間が設定されていて、まだ開始前の場合
+            if setting.event_start_at and now < setting.event_start_at:
+                messages.error(request, "イベントはまだ開始していません！")
+                register_error_log('スタンプ',"イベント未開始",mcid,"スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,unstarted")
+                return redirect('index')
+            
+            # 終了時間が設定されていて、すでに終わっている場合
+            if setting.event_end_at and now > setting.event_end_at:
+                messages.error(request, "イベントは終了しました。ご参加ありがとうございました！")
+                register_error_log('スタンプ',"イベント終了済み",mcid,"スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,ended")
+                return redirect('index')
+        
         #MojangAPIからmcidとuuidを取得する
         uuid_str, correct_name = get_minecraft_data(mcid)
         if not uuid_str:
@@ -29,8 +48,6 @@ def index(request):
             register_error_log('スタンプ',"処理中止:mcid未発見",mcid,f"スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,not_found,{mcid}")
             return redirect('index')
         
-        #キャッシュにmcidを保存
-        request.session['saved_mcid'] = mcid
 
         #データを確認
         player_check = Player.objects.filter(uuid=uuid_str).first()
@@ -168,6 +185,19 @@ def stamp_add_view(request):
         user_info = f"({request.user})" if request.user.is_authenticated else ""
         register_warn_log('権限不足', f"追加ページへのアクセスに失敗{user_info}",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
         return render(request, 'card/permission_denied.html')
+    
+    setting = SystemSetting.objects.first()
+    now = timezone.now()
+    if setting:
+
+        if setting.stamp_add_start_at and now < setting.stamp_add_start_at:
+            messages.error(request, "現在はスタンプの追加ができません")
+            register_error_log('時間外', f"追加ページへ{user_info}が速くアクセスしようとした",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
+            return redirect('index')
+
+        if setting.stamp_add_end_at and now > setting.stamp_add_end_at:
+            register_error_log('時間外', f"追加ページへ{user_info}が遅くアクセスしようとした",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
+            return redirect('index')
 
     if request.method == 'POST':
         form = StampForm(request.POST)
@@ -194,6 +224,7 @@ def stamp_add_view(request):
                 })
     else:
         form = StampForm()
+
 
     return render(request, 'card/stamp_add.html', {'form': form})
 
