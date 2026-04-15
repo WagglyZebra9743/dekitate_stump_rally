@@ -1,0 +1,17 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 仮想環境（絶対に除外！）
+venv/
+env/
+
+# データベース（ローカルのテストデータは上げないのが一般的）
+db.sqlite3
+
+# 環境変数や秘密鍵（もし今後 .env ファイルを作った時用）
+.env
+
+# エディタの設定
+.vscode/
