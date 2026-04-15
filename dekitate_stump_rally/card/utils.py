@@ -1,4 +1,5 @@
 import requests
+from all_log.register import register_error_log
 
 def get_minecraft_data(mcid):
     """MCIDからUUIDと正しい綴りの名前を取得する"""
@@ -9,5 +10,5 @@ def get_minecraft_data(mcid):
             data = response.json()
             return data.get('id'), data.get('name') # uuid(ハイフンなし), 正しい名前
     except Exception as e:
-        print(f"Mojang API Error: {e}")
+        register_error_log('APIエラー',f"Mojang API Error: {e}","","エラー,error,API")
     return None, None

@@ -5,7 +5,7 @@ from .models import AllLog
 
 @admin.register(AllLog)
 class AllLogAdmin(admin.ModelAdmin):
-    list_display = ('name','type','short_message','logtime')
+    list_display = ('name','type','short_message','player','logtime')
     @admin.display(description='メッセージ')
     def short_message(self, obj):
         if not obj.message:
@@ -31,4 +31,4 @@ class AllLogAdmin(admin.ModelAdmin):
         'type',
         ('logtime', DateTimeRangeFilter),
         ]
-    search_fields = ('name', 'message')
+    search_fields = ('name', 'message','player','search_assist')

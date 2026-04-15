@@ -9,7 +9,7 @@ from django.utils import timezone
 from .models import Stamp, Player, StampLog
 from django.contrib import messages
 from .utils import get_minecraft_data
-from all_log.register import register_info_log
+from all_log.register import register_info_log,register_create_log,register_error_log,register_warn_log
 
 def index(request):
     if request.method == 'POST':
@@ -19,23 +19,24 @@ def index(request):
         #mcid未入力の時
         if not mcid:
             messages.error(request, "MCIDを入力してください。")
+            register_error_log('スタンプ',"処理中止:mcid未入力","","スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,nothing")
             return redirect('index')
         
         #MojangAPIからmcidとuuidを取得する
         uuid_str, correct_name = get_minecraft_data(mcid)
         if not uuid_str:
             messages.error(request, f"Minecraftアカウント '{mcid}' が見つかりません。")
+            register_error_log('スタンプ',"処理中止:mcid未発見",mcid,f"スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,not_found,{mcid}")
             return redirect('index')
         
         #キャッシュにmcidを保存
         request.session['saved_mcid'] = mcid
 
-        register_info_log('システム',f"スタンプ処理開始:{mcid}:mcidチェックをクリア")
-
         #データを確認
         player_check = Player.objects.filter(uuid=uuid_str).first()
         if player_check and not player_check.is_enable:
             messages.error(request, "mcidに関する問題が発生しました。運営に問い合わせてください。")
+            register_warn_log('スタンプ',"処理中止:unavailable mcid",correct_name,f"スランプ,stamp,システム,system,警告,warn,キャンセル,中止,cancel,利用停止,ban,{correct_name},{uuid_str}")
             return redirect('index')
 
         #Dynmapから座標を取得
@@ -46,6 +47,7 @@ def index(request):
             data = response.json()
         except:
             messages.error(request, "マップサーバーと通信できませんでした。")
+            register_error_log('スタンプ',"システムエラー:マップ通信失敗",correct_name,f"スタンプ,stamp,システム,system,エラー,error,server,地図,マップ,map,通信,キャンセル,中止,cancel,{correct_name},{uuid_str}")
             return redirect('index')
 
         # サーバー上にプレイヤーがいるか探す
@@ -57,6 +59,7 @@ def index(request):
 
         if not player_data:
             messages.error(request, f" {correct_name} の座標取得に失敗しました.サバイバルにログインしているかを確認してください")
+            register_error_log('スタンプ',"処理中止:プレイヤー座標取得失敗",correct_name,f"スタンプ,stamp,システム,system,エラー,error,キャンセル,中止,cancel,地図,マップ,map,not_found,{correct_name},{uuid_str}")
             return redirect('index')
 
         # 座標と【現在いるワールド】を取得する
@@ -77,7 +80,7 @@ def index(request):
                     break # 発見したらループを抜ける
 
         if not hit_stamp:
-            # ★ 追加: スタンプ範囲外だった場合、近い順に並び替えて上位3件を取得
+            # スタンプ範囲外だった場合、近い順に並び替えて上位3件を取得
             stamps_with_distance.sort(key=lambda x: x[0])
             nearby_data = []
             for dist, s in stamps_with_distance[:3]:
@@ -91,8 +94,8 @@ def index(request):
                 })
             # セッションに一時保存してリダイレクト
             request.session['nearby_stamps'] = nearby_data
-
             messages.warning(request, "スタンプの範囲内にいません！座標やワールドを確認してください。")
+            register_info_log('スタンプ',f"処理終了:スタンプ範囲外{p_world}({px},{py},{pz}),以下の場所を提案{nearby_data}",correct_name,f"スタンプ,stamp,システム,system,終了,end,範囲外,out_of_area,not_found,{correct_name},{uuid_str}")
             return redirect('index')
 
         # 4. データ保存・ポイント計算
@@ -100,19 +103,18 @@ def index(request):
             uuid=uuid_str,
             defaults={'last_known_name': correct_name}
         )
+        if created:
+            register_create_log('プレイヤー',f"新規プレイヤー:{correct_name}を登録,{p_world}({px},{py},{pz})",correct_name,f"スタンプ,stamp,システム,system,登録,create,プレイヤー,player,{correct_name},{uuid_str}")
         # 名前が変わっていたら更新する
         if player.last_known_name != correct_name:
+            register_info_log('プレイヤー',f"mcid更新{player.last_known_name}->{correct_name}",correct_name,f"スタンプ,stamp,システム,system,更新,update,プレイヤー,player,{correct_name},{uuid_str}")
             player.last_known_name = correct_name
             player.save()
         
         if request.user.is_authenticated and player.user is None:
+            register_info_log('プレイヤー',f"discord:{request.user} = mcid:{correct_name}",correct_name,f"スタンプ,stamp,システム,system,更新,update,プレイヤー,player,{correct_name},{uuid_str},{request.user}")
             player.user = request.user
             player.save()
-        
-        # 有効かを確認する
-        if player.is_enable == False:
-            messages.warning(request, "プレイヤーデータ処理中に問題が発生しました。")
-            return redirect('index')
 
         log, log_created = StampLog.objects.get_or_create(player=player, stamp=hit_stamp)
         today = timezone.localtime().date()
@@ -121,21 +123,24 @@ def index(request):
             # 初回ゲット
             points_to_add = 500 if hit_stamp.is_hidden else 100
             msg = f"🎉 {'隠し' if hit_stamp.is_hidden else ''}スタンプ『{hit_stamp.name}』を初ゲット！ {points_to_add}pt獲得！"
+            register_info_log('スタンプ',f"初回獲得{hit_stamp.name} by {correct_name}({points_to_add})",correct_name,f"スタンプ,stamp,システム,system,{hit_stamp.name},{correct_name},{uuid_str}")
         else:
             # 2回目以降（今日すでに押しているかチェック）
             if timezone.localtime(log.last_pressed_at).date() < today:
                 points_to_add = 10
                 msg = f"📅 今日の『{hit_stamp.name}』スタンプ！ {points_to_add}pt獲得！"
+                register_info_log('スタンプ',f"デイリー獲得{hit_stamp.name} by {correct_name}({points_to_add})",correct_name,f"スタンプ,stamp,システム,system,{hit_stamp.name},{correct_name},{uuid_str}")
                 log.save() # 更新
             else:
                 messages.info(request, f"『{hit_stamp.name}』は今日すでに押しています。日付が変わるまで待ちましょう")
+                register_error_log('スタンプ',f"デイリーCT{hit_stamp.name} by {correct_name}",correct_name,f"処理中止,cancel,スタンプ,stamp,システム,system,{hit_stamp.name},{correct_name},{uuid_str}")
                 return redirect('index')
 
         # ポイント加算
         player.points += points_to_add
         player.save()
         messages.success(request, msg)
-        
+        register_info_log('スタンプ',f"処理終了:「{msg}」",correct_name,f"スタンプ,stamp,システム,system,終了,end,{correct_name},{uuid_str}")
         return redirect('index')
     
     saved_mcid = request.session.get('saved_mcid', '')
@@ -159,6 +164,9 @@ def stamp_add_view(request):
     
     # 管理者じゃなかったらエラーページを表示
     if not is_manager:
+        cached_mcid = request.session.get('saved_mcid', '')
+        user_info = f"({request.user})" if request.user.is_authenticated else ""
+        register_warn_log('権限不足', f"追加ページへのアクセスに失敗{user_info}",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
         return render(request, 'card/permission_denied.html')
 
     if request.method == 'POST':
@@ -169,6 +177,7 @@ def stamp_add_view(request):
                 stamp = form.save(commit=False)
                 stamp.author = request.user
                 stamp.save() 
+                register_create_log('スタンプ追加',f"以下のスタンプが{request.user}によって追加されました{stamp}","",f"スタンプ追加,stamp,成功,success,処理終了,end,{request.user}")
                 return redirect('stamp_success', pk=stamp.pk) # 成功ページへ！
             
             # 入力画面で「確認する」ボタンが押された場合
