@@ -35,6 +35,8 @@ class Stamp(models.Model):
     # 隠しスタンプかどうか
     is_hidden = models.BooleanField('隠しスタンプ', default=False)
 
+    note = models.TextField("メモ",blank=True,null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -57,6 +59,8 @@ class Player(models.Model):
         related_name='player_profiles'
     )
 
+    note = models.TextField("メモ",blank=True,null=True)
+
     is_enable = models.BooleanField('有効',default=True)
 
     def __str__(self):
@@ -68,8 +72,10 @@ class UserProfile(models.Model):
     # ここにスレッドIDを保存する
     discord_thread_id = models.CharField("DiscordスレッドID", max_length=50, blank=True, null=True)
 
+    note = models.TextField("メモ",blank=True,null=True)
+
     def __str__(self):
-        return f"{self.user.username} のプロフィール"
+        return f"{self.user.username} のdiscord通知情報"
 
 
 class StampLog(models.Model):
@@ -95,6 +101,8 @@ class SystemSetting(models.Model):
     # スタンプ追加可能期間
     stamp_add_start_at = models.DateTimeField('スタンプ追加開始日時', null=True, blank=True)
     stamp_add_end_at = models.DateTimeField('スタンプ追加終了日時', null=True, blank=True)
+
+    note = models.TextField("メモ",blank=True,null=True)
 
     class Meta:
         verbose_name = "システム設定"

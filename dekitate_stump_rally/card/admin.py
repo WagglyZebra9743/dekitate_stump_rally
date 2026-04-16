@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import RelatedOnlyFieldListFilter
-from .models import Stamp,Player, StampLog,SystemSetting
+from .models import Stamp,Player,StampLog,UserProfile,SystemSetting
 
 @admin.register(Stamp)
 class StampAdmin(admin.ModelAdmin):
@@ -16,6 +16,15 @@ class StampAdmin(admin.ModelAdmin):
     
     # 検索機能（スタンプ名で検索可能にする）
     search_fields = ('name', 'description')
+    def get_actions(self, request):
+        # まず元々のアクションのリストを取得する
+        actions = super().get_actions(request)
+        
+        # もし「delete_selected」というアクションが含まれていたら、それを削除する
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+            
+        return actions
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
@@ -26,6 +35,29 @@ class PlayerAdmin(admin.ModelAdmin):
     search_fields = ('last_known_name', 'uuid')
     # 紐づいているDiscordユーザーの有無などで絞り込み
     list_filter = ('user',)
+    def get_actions(self, request):
+        # まず元々のアクションのリストを取得する
+        actions = super().get_actions(request)
+        
+        # もし「delete_selected」というアクションが含まれていたら、それを削除する
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+            
+        return actions
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user','discord_thread_id')
+    search_fields = ('user','discord_thread_id')
+    def get_actions(self, request):
+        # まず元々のアクションのリストを取得する
+        actions = super().get_actions(request)
+        
+        # もし「delete_selected」というアクションが含まれていたら、それを削除する
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+            
+        return actions
 
 # ==========================================
 # スタンプ取得履歴の管理

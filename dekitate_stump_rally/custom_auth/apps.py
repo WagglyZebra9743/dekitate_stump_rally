@@ -27,7 +27,7 @@ class CustomAuthConfig(AppConfig):
 
         # 標準の画面(SocialAccountAdmin)を引き継ぎつつ、一部だけ変更するクラスを作る
         class CustomSocialAccountAdmin(SocialAccountAdmin):
-            exclude = ('extra_data',) # ★ ここで「エクストラデータ」を入力フォームから除外！
+            exclude = ('extra_data',) # 「エクストラデータ」を入力フォームから除外！
 
         # カスタマイズした画面を登録し直す
         admin.site.register(SocialAccount, CustomSocialAccountAdmin)

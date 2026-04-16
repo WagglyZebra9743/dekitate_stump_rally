@@ -3,8 +3,7 @@ from .models import UserProfile # 作成したモデルをインポート
 from django.conf import settings
 from all_log.register import register_info_log,register_error_log
 
-def send_stamp_notification(user, player, stamp, discord_user_id):
-    register_info_log('デバッグ',"discord通知コード7行目","","debag")
+def send_stamp_notification(user, player, stamp,points_to_add, discord_user_id):
     BOT_TOKEN = settings.DISCORD_BOT_TOKEN
     CHANNEL_ID = '1494160947168804934' 
     
@@ -34,20 +33,55 @@ def send_stamp_notification(user, player, stamp, discord_user_id):
             # プロフィールに保存
             profile.discord_thread_id = thread_id
             profile.save()
+            message_content = f"<@{discord_user_id}> 通知用スレッドを作成しました"
+            data_msg = {
+                'content': message_content
+                }
+            url_send_msg = f'https://discord.com/api/v10/channels/{thread_id}/messages'
+            res = requests.post(url_send_msg, headers=headers, json=data_msg)
+            if res.status_code not in [200, 201]:
+                register_error_log('Embed送信エラー', f"Discordエラー: {res.text}", "", "debag,error")
+
         else:
             register_error_log('スレッド作成エラー',f"スレッドの作成に失敗しました{res.text}","","失敗,エラー,fail,error,server,discord")
             return
             
+    url_add_member = f'https://discord.com/api/v10/channels/{thread_id}/thread-members/{discord_user_id}'
+    requests.put(url_add_member, headers=headers)
     # --------------------------------------------------------
     # ② メッセージの送信
     # --------------------------------------------------------
     url_send_msg = f'https://discord.com/api/v10/channels/{thread_id}/messages'
     
-    # ★ サブ垢が分かるように player.last_known_name をメッセージに含める！
-    message_content = f"<@{discord_user_id}> **{player.last_known_name}** がスタンプ **『{stamp.name}』** を見つけました！🎉"
     
+    embed_data = {
+            "title": "スタンプを取得しました",
+            "description": f"{stamp.name}を押したことで{points_to_add}ポイント獲得",
+            "color": 11403008,
+            "fields": [
+                {
+                    "name": "スタンプ情報",
+                    "value": f"{stamp.get_world_display()}\n:round_pushpin: ({stamp.x},{stamp.y},{stamp.z})",
+                    "inline": True
+                },
+                {
+                    "name": "獲得者",
+                    "value": f"{player.last_known_name}",
+                    "inline": True
+                },
+                {
+                    "name": "所持ポイント",
+                    "value": f"{player.points}",
+                    "inline": True
+                }
+            ]
+        }
+
     data_msg = {
-        'content': message_content
+        'content': "",
+        "embeds":[embed_data]
     }
     
-    requests.post(url_send_msg, headers=headers, json=data_msg)
+    res = requests.post(url_send_msg, headers=headers, json=data_msg)
+    if res.status_code not in [200, 201]:
+        register_error_log('Embed送信エラー', f"Discordエラー: {res.text}", "", "debag,error")

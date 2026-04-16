@@ -163,11 +163,10 @@ def index(request):
         messages.success(request, msg)
         if player.user and player.user.socialaccount_set.exists():
             # Django-allauthなどを使っている場合、DiscordのIDを取得
-            discord_account = player.user.socialaccount_set.filter(provider='discord').first()
-        if discord_account:
-            discord_uid = discord_account.uid
-            # 先ほど作った関数を呼び出す
-            send_stamp_notification(player.user, player, stamp, discord_uid)
+            discord_account = player.user.socialaccount_set.filter(provider='Discord').first()
+            if discord_account:
+                discord_uid = discord_account.uid
+                send_stamp_notification(player.user, player, hit_stamp,points_to_add, discord_uid)
         register_info_log('スタンプ',f"処理終了:「{msg}」",correct_name,f"スタンプ,stamp,システム,system,終了,end,{correct_name},{uuid_str}")
         return redirect('index')
     
