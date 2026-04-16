@@ -2,7 +2,16 @@
 {% block title %}スタンプ一覧 | {% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">スタンプ攻略状況</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0">スタンプ攻略状況</h2>
+        
+        <div class="input-group input-group-sm w-auto shadow-sm">
+            <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" id="stampSearchInput" class="form-control border-start-0" placeholder="スタンプ名で検索...">
+        </div>
+        </div>
 
     <div class="table-responsive shadow-sm rounded">
         <table class="table table-hover align-middle bg-white" id="stampTable">
@@ -24,7 +33,12 @@
             data-pressed="{{ stamp.is_pressed|yesno:'true,false' }}"
             data-hidden="{{ stamp.is_hidden|yesno:'true,false' }}"
             data-count="{{ stamp.pressed_count }}"
-            data-ratio="{{ stamp.ratio }}">
+            data-ratio="{{ stamp.ratio }}"
+
+            data-world-id="{{ stamp.world }}"
+            data-x="{{ stamp.x }}"
+            data-y="{{ stamp.y }}"
+            data-z="{{ stamp.z }}">
             
             <td>
                 {% if stamp.is_hidden %}<i class="bi bi-incognito text-muted me-1"></i>{% endif %}
@@ -33,7 +47,7 @@
             
             <td class="text-center">
                 {% if stamp.is_pressed %}
-                    <span class="badge bg-success">CLEAR</span>
+                    <span class="badge bg-success">到達済</span>
                 {% else %}
                     <span class="badge bg-light text-secondary border">未踏</span>
                 {% endif %}
@@ -60,7 +74,15 @@
                 <hr>
                 <div id="m_coords_area">
                     <p class="mb-1 text-muted small">座標</p>
-                    <p class="fw-bold"><i class="bi bi-geo-alt"></i> <span id="m_world"></span> (<span id="m_coords"></span>)</p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">
+                            <i class="bi bi-geo-alt text-danger"></i> 
+                            <span id="m_world"></span> (<span id="m_coords"></span>)
+                        </div>
+                        <a id="m_map_link" href="#" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm">
+                            <i class="bi bi-map"></i> Webマップ
+                        </a>
+                    </div>
                 </div>
                 <div class="alert alert-light border d-flex justify-content-between align-items-center mb-0">
                     <span>この場所を訪れた人</span>
@@ -72,52 +94,50 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    // 全てのスタンプ行にクリックイベントを設定
-        const rows = document.querySelectorAll('.stamp-row');
-        rows.forEach(row => {
-            row.addEventListener('click', function() {
-                const d = this.dataset; // data-属性をすべて取得
+document.addEventListener('DOMContentLoaded', function() {
+    const rows = document.querySelectorAll('.stamp-row');
+    
+    // 1. 全てのスタンプ行にクリックイベント（詳細表示）を設定
+    rows.forEach(row => {
+        row.addEventListener('click', function() {
+            const d = this.dataset; // data-属性をすべて取得
             
-                document.getElementById('m_name').innerText = d.name;
-                // 改行をブラウザ表示用に変換してセット
-                document.getElementById('m_desc').innerText = d.desc;
-                document.getElementById('m_world').innerText = d.world;
-                document.getElementById('m_count').innerText = d.count;
-                document.getElementById('m_ratio').innerText = d.ratio;
+            document.getElementById('m_name').innerText = d.name;
+            document.getElementById('m_desc').innerText = d.desc; // ※innerTextで安全に改行を表示
+            document.getElementById('m_world').innerText = d.world;
+            document.getElementById('m_count').innerText = d.count;
+            document.getElementById('m_ratio').innerText = d.ratio;
 
-                const coordsArea = document.getElementById('m_coords_area');
-                if (d.hidden === 'true' && d.pressed === 'false') {
-                    coordsArea.style.display = 'none';
-                } else {
-                    coordsArea.style.display = 'block';
-                    document.getElementById('m_coords').innerText = d.coords;
-                }
-                new bootstrap.Modal(document.getElementById('detailModal')).show();
-            });
+            const coordsArea = document.getElementById('m_coords_area');
+            const mapLink = document.getElementById('m_map_link');
+            if (d.hidden === 'true' && d.pressed === 'false') {
+                coordsArea.style.display = 'none';
+            } else {
+                coordsArea.style.display = 'block';
+                document.getElementById('m_coords').innerText = d.coords;
+                const mapUrl = `https://maps.dekitateserver.com/survival/?worldname=${d.worldId}&mapname=flat&zoom=6&x=${d.x}&y=${d.y}&z=${d.z}`;
+                mapLink.href = mapUrl;
+            }
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
         });
     });
-// 詳細表示ロジック
-function showDetail(name, desc, world, coords, isPressed, isHidden, count, ratio) {
-    document.getElementById('m_name').innerText = name;
-    document.getElementById('m_desc').innerHTML = desc;
-    document.getElementById('m_world').innerText = world;
-    document.getElementById('m_count').innerText = count;
-    document.getElementById('m_ratio').innerText = ratio;
 
-    const coordsArea = document.getElementById('m_coords_area');
-    // 隠しスタンプかつ未達成の場合は座標を隠す
-    if (isHidden === 'true' && isPressed === 'false') {
-        coordsArea.style.display = 'none';
-    } else {
-        coordsArea.style.display = 'block';
-        document.getElementById('m_coords').innerText = coords;
+    // 2. 検索機能
+    const searchInput = document.getElementById('stampSearchInput');
+    if(searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            rows.forEach(row => {
+                // data-name属性から名前を取得して判定
+                const name = row.dataset.name.toLowerCase();
+                // 検索文字が含まれていれば表示、なければ非表示
+                row.style.display = name.includes(filter) ? '' : 'none';
+            });
+        });
     }
+});
 
-    new bootstrap.Modal(document.getElementById('detailModal')).show();
-}
-
-// 簡単なテーブルソート機能
+// 3. テーブルソート機能
 function sortTable(n) {
     var table = document.getElementById("stampTable");
     var rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;

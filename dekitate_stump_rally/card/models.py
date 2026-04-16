@@ -61,6 +61,15 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.last_known_name} ({self.points} pt)"
+class UserProfile(models.Model):
+    # Userモデルと1対1で紐付ける
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    
+    # ここにスレッドIDを保存する
+    discord_thread_id = models.CharField("DiscordスレッドID", max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} のプロフィール"
 
 
 class StampLog(models.Model):

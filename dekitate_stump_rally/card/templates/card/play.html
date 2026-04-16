@@ -1,7 +1,55 @@
 {% extends "base.html" %}
 {% block title %}遊び方| {% endblock %}
 {% block content %}
-    <h1>遊び方</h1>
-    <p>1. にログインする</p>
+<div class="container mt-5">
+    <h4>イベントの参加方法</h4>
     
+    <p class="fs-5 text-dark">
+        1.マインクラフトjava版1.21.8でマルチプレイで遊ぶからサーバーを追加を選択<br>
+        バージョンの変更方法は<a href="https://games.xserver.ne.jp/minecraft-media/change-version/" target="_blank">このページ</a>を参考にしてください<br>
+        サーバーアドレスの欄に 
+        <span class="copy-inline fw-bold text-primary text-decoration-underline" 
+              style="cursor: pointer;" 
+              data-ip="play.dekitateserver.com" 
+              title="クリックしてコピー">
+            play.dekitateserver.com <i class="bi bi-copy small text-muted copy-icon"></i>
+        </span> 
+        と入力して接続する
+    </p>
+    <p class="fs-5 text-dark">
+        2. サーバーのチュートリアルを終わらせる
+    </p>
+    
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyElements = document.querySelectorAll('.copy-inline');
+
+    copyElements.forEach(el => {
+        el.addEventListener('click', function() {
+            const textToCopy = this.dataset.ip;
+            // クリックされた要素の中にあるアイコン(iタグ)だけを取得
+            const iconEl = this.querySelector('.copy-icon');
+
+            // 古い裏技を捨てた、最新機能のみのシンプルなコピー処理
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                
+                // 成功したら、アイコンのクラスを「✓（緑色）」に書き換える
+                iconEl.className = 'bi bi-check-lg small text-success copy-icon';
+                this.style.pointerEvents = 'none'; // 連打防止
+                
+                // 2秒後に元の「コピーアイコン（グレー）」に戻す
+                setTimeout(() => {
+                    iconEl.className = 'bi bi-copy small text-muted copy-icon';
+                    this.style.pointerEvents = 'auto';
+                }, 2000);
+                
+            }).catch(err => {
+                console.error('コピーに失敗しました', err);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

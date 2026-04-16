@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -180,3 +182,5 @@ ACCOUNT_LOGOUT_ON_GET = True
 
 # ユーザー登録時に「ユーザー名」を入力させる画面をスキップする
 ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+
+DISCORD_BOT_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')

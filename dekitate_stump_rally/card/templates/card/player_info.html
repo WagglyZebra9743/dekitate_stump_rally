@@ -21,7 +21,7 @@
                 <span class="badge bg-secondary fs-6 px-3 py-2 rounded-pill shadow-sm">
                     Discord未連携
                 </span>
-                <p class="text-muted small mt-2">※WebサイトからDiscordログインすると自動で連携されます</p>
+                <p class="text-muted small mt-2">※右上からDiscordログインしてスタンプを取得すると自動で連携されます</p>
             {% endif %}
         </div>
     </div>
@@ -58,31 +58,45 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
-            <h4 class="card-title fw-bold border-bottom pb-2 mb-4">
-                <i class="bi bi-journal-check text-success"></i> 獲得済みスタンプ一覧
-            </h4>
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-4">
+                <h4 class="card-title fw-bold m-0"><i class="bi bi-journal-check text-success"></i> 獲得済みスタンプ一覧</h4>
+                <input type="text" id="searchInput" class="form-control form-control-sm w-auto" placeholder="スタンプ名で検索...">
+            </div>
             
             {% if stamp_logs %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" id="myStampTable">
                         <thead class="table-light">
                             <tr>
-                                <th>スタンプ名</th>
-                                <th>初回発見日時</th>
-                                <th>最終取得日時</th>
+                                <th onclick="sortMyTable(0)" style="cursor:pointer">スタンプ名 <i class="bi bi-sort-alpha-down"></i></th>
+                                <th onclick="sortMyTable(1)" style="cursor:pointer">初回発見日時 <i class="bi bi-arrow-down-up"></i></th>
+                                <th onclick="sortMyTable(2)" style="cursor:pointer">デイリー状況 <i class="bi bi-arrow-down-up"></i></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for log in stamp_logs %}
-                            <tr>
-                                <td class="fw-bold text-success">
-                                    {% if log.stamp.is_hidden %}
-                                        <i class="bi bi-incognito text-muted me-1" title="隠しスタンプ"></i>
-                                    {% endif %}
+                            <tr class="mypage-stamp-row" style="cursor:pointer"
+                                data-name="{{ log.stamp.name }}" data-desc="{{ log.stamp.description }}"
+                                data-world="{{ log.stamp.get_world_display }}" data-coords="{{ log.stamp.x }}, {{ log.stamp.y }}, {{ log.stamp.z }}"
+                                data-hidden="{{ log.stamp.is_hidden|yesno:'true,false' }}" data-pressed="true"
+                                
+                                data-world-id="{{ log.stamp.world }}"
+                                data-x="{{ log.stamp.x }}"
+                                data-y="{{ log.stamp.y }}"
+                                data-z="{{ log.stamp.z }}">
+                                
+                                <td class="fw-bold text-success stamp-name-col">
+                                    {% if log.stamp.is_hidden %}<i class="bi bi-incognito text-muted me-1" title="隠しスタンプ"></i>{% endif %}
                                     {{ log.stamp.name }}
                                 </td>
                                 <td class="text-muted">{{ log.first_pressed_at|date:"Y/m/d H:i" }}</td>
-                                <td class="text-muted">{{ log.last_pressed_at|date:"Y/m/d H:i" }}</td>
+                                <td>
+                                    {% if log.can_press_today %}
+                                        <span class="badge bg-primary shadow-sm"><i class="bi bi-gift"></i> 本日獲得可能</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="bi bi-check2"></i> 本日完了</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -90,14 +104,95 @@
                 </div>
             {% else %}
                 <div class="text-center py-5">
-                    <i class="bi bi-map text-muted" style="font-size: 3rem;"></i>
                     <p class="text-muted mt-3 fw-bold">まだスタンプを獲得していません。</p>
-                    <p class="text-muted small">サーバーにログインして、最初のスタンプを探しに行きましょう！</p>
                 </div>
             {% endif %}
-            
         </div>
     </div>
+
+    <div class="modal fade" id="myDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fw-bold" id="my_m_name"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-body">
+                    <p id="my_m_desc"></p>
+                    <hr>
+                    <p class="mb-1 text-muted small">座標</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">
+                            <i class="bi bi-geo-alt text-danger"></i> 
+                            <span id="my_m_world"></span> (<span id="my_m_coords"></span>)
+                        </div>
+                        <a id="my_m_map_link" href="#" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm">
+                            <i class="bi bi-map"></i> Webマップ
+                        </a>
+                    </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. 詳細モーダルの表示
+        // 1. 詳細モーダルの表示
+        const rows = document.querySelectorAll('.mypage-stamp-row');
+        rows.forEach(row => {
+            row.addEventListener('click', function() {
+                const d = this.dataset;
+                document.getElementById('my_m_name').innerText = d.name;
+                document.getElementById('my_m_desc').innerText = d.desc;
+                document.getElementById('my_m_world').innerText = d.world;
+                document.getElementById('my_m_coords').innerText = d.coords;
+                
+                // WebマップのURLを動的に生成してセットする
+                const mapLink = document.getElementById('my_m_map_link');
+                const mapUrl = `https://maps.dekitateserver.com/survival/?worldname=${d.worldId}&mapname=flat&zoom=6&x=${d.x}&y=${d.y}&z=${d.z}`;
+                mapLink.href = mapUrl;
+
+                new bootstrap.Modal(document.getElementById('myDetailModal')).show();
+            });
+        });
+
+        // 2. 検索機能
+        const searchInput = document.getElementById('searchInput');
+        if(searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = this.value.toLowerCase();
+                rows.forEach(row => {
+                    const name = row.querySelector('.stamp-name-col').innerText.toLowerCase();
+                    row.style.display = name.includes(filter) ? '' : 'none';
+                });
+            });
+        }
+    });
+
+    // 3. ソート機能
+    function sortMyTable(n) {
+        let table = document.getElementById("myStampTable"), rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true; dir = "asc";
+        while (switching) {
+            switching = false; rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                if (dir == "asc") {
+                    if (x.innerText.toLowerCase() > y.innerText.toLowerCase()) { shouldSwitch = true; break; }
+                } else if (dir == "desc") {
+                    if (x.innerText.toLowerCase() < y.innerText.toLowerCase()) { shouldSwitch = true; break; }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true; switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; }
+            }
+        }
+    }
+    </script>
 
 </div>
 {% endblock %}

@@ -1,6 +1,5 @@
 # card/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Stamp
 from .forms import StampForm
 import requests
 import math
@@ -10,6 +9,7 @@ from .models import Stamp, Player, StampLog, SystemSetting
 from django.contrib import messages
 from .utils import get_minecraft_data
 from all_log.register import register_info_log,register_create_log,register_error_log,register_warn_log
+from .discord_notice import send_stamp_notification
 
 def index(request):
     if request.method == 'POST':
@@ -107,7 +107,11 @@ def index(request):
                     'world': s.get_world_display(),
                     'coords': f"{s.x}, {s.y}, {s.z}",
                     'is_hidden': s.is_hidden,
-                    'distance': round(dist, 1) # 距離を小数点第1位まで
+                    'distance': round(dist, 1),
+                    'world_id': s.world, 
+                    'x': s.x,
+                    'y': s.y,
+                    'z': s.z
                 })
             # セッションに一時保存してリダイレクト
             request.session['nearby_stamps'] = nearby_data
@@ -157,6 +161,13 @@ def index(request):
         player.points += points_to_add
         player.save()
         messages.success(request, msg)
+        if player.user and player.user.socialaccount_set.exists():
+            # Django-allauthなどを使っている場合、DiscordのIDを取得
+            discord_account = player.user.socialaccount_set.filter(provider='discord').first()
+        if discord_account:
+            discord_uid = discord_account.uid
+            # 先ほど作った関数を呼び出す
+            send_stamp_notification(player.user, player, stamp, discord_uid)
         register_info_log('スタンプ',f"処理終了:「{msg}」",correct_name,f"スタンプ,stamp,システム,system,終了,end,{correct_name},{uuid_str}")
         return redirect('index')
     

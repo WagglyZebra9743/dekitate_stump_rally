@@ -56,7 +56,14 @@
                     data-name="{{ ns.name }}" data-desc="{{ ns.desc }}"
                     data-world="{{ ns.world }}" data-coords="{{ ns.coords }}"
                     data-hidden="{{ ns.is_hidden|yesno:'true,false' }}"
-                    data-pressed="false"> <div class="d-flex justify-content-between align-items-center">
+                    data-pressed="false"
+                    
+                    data-world-id="{{ ns.world_id }}"
+                    data-x="{{ ns.x }}"
+                    data-y="{{ ns.y }}"
+                    data-z="{{ ns.z }}">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold">{% if ns.is_hidden %}<i class="bi bi-incognito text-muted"></i> {% endif %}{{ ns.name }}</span>
                         <span class="badge bg-secondary rounded-pill">距離:{{ ns.distance }}ブロック</span>
                     </div>
@@ -79,8 +86,17 @@
                     <hr>
                     <div id="m_coords_area">
                         <p class="mb-1 text-muted small">座標</p>
-                        <p class="fw-bold"><i class="bi bi-geo-alt text-danger"></i> <span id="m_world"></span> (<span id="m_coords"></span>)</p>
-                    </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="fw-bold">
+                                <i class="bi bi-geo-alt text-danger"></i> 
+                                <span id="m_world"></span> (<span id="m_coords"></span>)
+                            </div>
+                            <a id="m_map_link" href="#" target="_blank" class="btn btn-sm btn-outline-primary shadow-sm">
+                                <i class="bi bi-map"></i> Webマップ
+                            </a>
+                        </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -97,12 +113,15 @@
                 document.getElementById('m_world').innerText = d.world;
 
                 const coordsArea = document.getElementById('m_coords_area');
+                const mapLink = document.getElementById('m_map_link');
                 // 隠しスタンプかつ未取得の場合は座標を隠す
                 if (d.hidden === 'true' && d.pressed === 'false') {
                     coordsArea.style.display = 'none';
                 } else {
                     coordsArea.style.display = 'block';
                     document.getElementById('m_coords').innerText = d.coords;
+                    const mapUrl = `https://maps.dekitateserver.com/survival/?worldname=${d.worldId}&mapname=flat&zoom=6&x=${d.x}&y=${d.y}&z=${d.z}`;
+                    mapLink.href = mapUrl;
                 }
                 new bootstrap.Modal(document.getElementById('detailModal')).show();
             });
