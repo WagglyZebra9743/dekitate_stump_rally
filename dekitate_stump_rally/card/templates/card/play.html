@@ -1,25 +1,138 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}遊び方| {% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h4>イベントの参加方法</h4>
     
     <p class="fs-5 text-dark">
-        1.マインクラフトjava版1.21.8でマルチプレイで遊ぶからサーバーを追加を選択<br>
+        1.マインクラフトjava版1.21.8で<strong>マルチプレイで遊ぶ</strong>→<strong>サーバーを追加</strong>を押す<br>
         バージョンの変更方法は<a href="https://games.xserver.ne.jp/minecraft-media/change-version/" target="_blank">このページ</a>を参考にしてください<br>
         サーバーアドレスの欄に 
         <span class="copy-inline fw-bold text-primary text-decoration-underline" 
               style="cursor: pointer;" 
-              data-ip="play.dekitateserver.com" 
+              data-ip="dekitateserver.com" 
               title="クリックしてコピー">
-            play.dekitateserver.com <i class="bi bi-copy small text-muted copy-icon"></i>
+            dekitateserver.com<i class="bi bi-copy small text-muted copy-icon"></i>
         </span> 
-        と入力して接続する
+        と入力してサーバーに接続する<br>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moreinfoOne" aria-expanded="false" aria-controls="moreinfoOne">
+            もっと詳しく
+        </button>
+        <div class="collapse" id="moreinfoOne">
+            <div class="card card-body bg-light text-secondary">
+                何て詳しいんだ
+            </div>
+        </div>
     </p>
     <p class="fs-5 text-dark">
-        2. サーバーのチュートリアルを終わらせる
+        2. サーバーのチュートリアルを終わらせる<br>
+        サーバーの<a href="https://www.dekitateserver.com/guide/" target="_blank">ガイドページ</a>を参考にするといいと思います<br>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moreinfoTwo" aria-expanded="false" aria-controls="moreinfoTwo">
+            もっと詳しく
+        </button>
+        <div class="collapse mt-2" id="moreinfoTwo">
+            <div class="card card-body bg-light text-secondary">
+                最初にサーバーに接続すると正面に看板が付いている壁があります。<br>
+                看板を右クリックすることで問題を答えて先に進みます。<br>
+                <img src="{% static 'tutorial.png' %}" alt="チュートリアル看板" width="300", height="285">
+                看板の周りにヒントが書いてあります<br>
+                間違えてもペナルティは無いので気軽にやりましょう
+            </div>
+        </div>
     </p>
-    
+    <p class="fs-5 text-dark">
+        3. サバイバルサーバー(/hub実行時の正面)に移動する<br>
+        水に飛び込むと移動できます<br>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moreinfoThree" aria-expanded="false" aria-controls="moreinfoThree">
+            もっと詳しく
+        </button>
+        <div class="collapse" id="moreinfoThree">
+            <div class="card card-body bg-light text-secondary">
+                マインクラフトのチャット欄に/hubと入力してエンターキーを押して送信しましょう。<br>
+                正面に画像のような建築物があると思います。中心にある水に入ることでサバイバルサーバーに移動します。<br>
+                <img src="{% static 'lobby_survival.png' %}" alt="サバイバル移動水" width="234", height="215">
+                ロビーに戻る場合も同じように/hubを実行しましょう。<br>
+                また、/spawnを使えば接続中のサーバー(サバイバル等)の初期地点に戻れます。<br>
+                他にもロビーから各サーバー(サバイバル等)に接続することでも初期地点に戻れます。<br>
+                詳しくは<a herf="https://www.dekitateserver.com/wiki/warp/">wikiページ</a>
+            </div>
+        </div>
+    </p>
+    <p class="fs-5 text-dark">
+        4. スタンプの場所に移動してMCIDを入力してスタンプを押す<br>
+        <a href="/">メインページ</a>にスタンプを押すボタンがあります<br>
+        <button class="btn btn-outline-secondary btn-sm fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#moreinfoFour" aria-expanded="false" aria-controls="moreinfoFour">
+            もっと詳しく
+        </button>
+        <div class="collapse" id="moreinfoFour">
+            <div class="card card-body bg-light text-secondary">
+                MCID(マインクラフトのユーザー名)はログイン時に表示されるチャットから確認することができます。<br>
+                右のWagglyZebra9743などと書かれている部分が自分のマインクラフトのユーザー名です。<br>
+                <img src="{% static 'login_msg.png' %}" alt="ログイン時表示画像" width="508", height="19">
+            </div>
+        </div>
+    </p>
+    スタンプを集めてポイントを集めて<a herf="{% url 'reward' %}">報酬</a>を獲得しよう
+    <div class="container mt-5">
+        <h4 class="mb-4"></i> 困ったときは</h4>
+
+        <div class="accordion shadow-sm" id="faqAccordion">
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                        Q. スタンプの場所がわからない
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne">
+                    <div class="accordion-body text-secondary">
+                        上のタブにもある<a href="{% url 'stamp_list' %}" target="_blank">スタンプ一覧</a>を押して、それぞれの項目をクリックすると座標が見れます。隠しスタンプの場合は座標は見えませんが、メインページでスタンプが押せなかったときに左下に距離が出ます<br>
+                        左下の項目もクリックしたら詳細を見ることができます
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Q. 隠しスタンプとはなんですか
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo">
+                    <div class="accordion-body text-secondary">
+                        押すまで座標が見えないスタンプです。スタンプの説明文やメインページでスタンプが押せなかったときの距離から場所を特定しましょう
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Q. スタンプの座標への行き方がわからない
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree">
+                    <div class="accordion-body text-secondary">
+                        ゲーム内でF3キーを押すことで左に座標が表示されます。座標が遠い場合はトロッコ路線や氷ボート、ネザーゲートを利用すると素早く移動できます。<br>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFour">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                        Q. 
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour">
+                    <div class="accordion-body text-secondary">
+                        ゲーム内でF3キーを押すことで左に座標が表示されます。座標が遠い場合はトロッコ路線や氷ボート、ネザーゲートを利用すると素早く移動できます。<br>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>

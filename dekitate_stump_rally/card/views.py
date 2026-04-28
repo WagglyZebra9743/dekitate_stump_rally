@@ -7,9 +7,20 @@ import time
 from django.utils import timezone
 from .models import Stamp, Player, StampLog, SystemSetting
 from django.contrib import messages
+from django.utils.safestring import mark_safe
 from .utils import get_minecraft_data
 from all_log.register import register_info_log,register_create_log,register_error_log,register_warn_log
 from .discord_notice import send_stamp_notification
+
+
+def rules(request):
+    return render(request, "card/rules.html")
+
+def play(request):
+    return render(request, "card/play.html")
+
+def reward(request):
+    return render(request, "card/reward.html")
 
 def index(request):
     if request.method == 'POST':
@@ -87,7 +98,7 @@ def index(request):
         hit_stamp = None
         stamps_with_distance = []
         for stamp in Stamp.objects.all():
-            # ★ ここが重要！プレイヤーの現在ワールドと、スタンプの設置ワールドが同じかチェック
+            # プレイヤーの現在ワールドと、スタンプの設置ワールドが同じかチェック
             if stamp.world == p_world:
                 # ワールドが同じ場合のみ、距離を計算する
                 distance = math.sqrt((px - stamp.x)**2 + (py - stamp.y)**2 + (pz - stamp.z)**2)
@@ -177,12 +188,6 @@ def index(request):
         'saved_mcid': saved_mcid,
         'nearby_stamps': nearby_stamps
     })
-
-def rules(request):
-    return render(request, "card/rules.html")
-
-def play(request):
-    return render(request, "card/play.html")
 
 # --- 登録処理のビュー ---
 def stamp_add_view(request):
@@ -280,6 +285,9 @@ def player_info(request):
     
     # ポイントランキングの順位を計算（自分よりポイントが多い人数 + 1）
     rank = Player.objects.filter(points__gt=player.points).count() + 1
+
+    # 同じ順位(ポイント)の人数を計算
+    samerank_count = Player.objects.filter(points=player.points).count() - 1
     
     # 一つ上の順位のポイント（自分より高いポイントの中で一番小さい値）
     upper = Player.objects.filter(points__gt=player.points).order_by('points').first()
@@ -298,6 +306,7 @@ def player_info(request):
     context = {
         'player': player,
         'rank': rank,
+        'same_rank': f"同じ順位が{samerank_count}人います" if samerank_count else "",
         'upper_points': upper.points if upper else "-",
         'lower_points': lower.points if lower else "-",
         'stamp_logs': stamp_logs,

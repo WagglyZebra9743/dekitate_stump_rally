@@ -23,7 +23,7 @@
         <div class="card-body p-4">
             <h3 class="card-title fw-bold mb-4"><i class="bi bi-geo-alt text-success"></i> スタンプを押す</h3>
             
-            <form method="post" action="{% url 'index' %}">
+            <form method="post" action="{% url 'index' %}" id="stampForm">
                 {% csrf_token %}
                 <div class="mb-4 text-start">
                     <label for="mcid" class="form-label fw-bold">Minecraft ID (MCID)</label>
@@ -31,7 +31,7 @@
                     <div class="form-text">大文字・小文字は区別されません。</div>
                 </div>
                 
-                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold">
+                <button type="submit" class="btn btn-success btn-lg w-100 fw-bold" id="stampButton">
                     今いる場所でスタンプを押す！
                 </button>
             </form>
@@ -126,6 +126,72 @@
                 new bootstrap.Modal(document.getElementById('detailModal')).show();
             });
         });
-    });
+    //スタンプ送信時の連打防止＆時間経過で切り替わるランダムメッセージ
+    const stampForm = document.getElementById('stampForm');
+    const stampButton = document.getElementById('stampButton');
+
+    if (stampForm && stampButton) {
+        stampForm.addEventListener('submit', function(e) {
+            // 既に送信中（ボタンがdisabledクラスを持っている）なら、何もしない（二重送信防止）
+            if (stampButton.classList.contains('disabled')) {
+                e.preventDefault();
+                return;
+            }
+
+            // ランダムに表示する面白いメッセージのリスト
+            const loadingMessages = [
+                "時計を確認中",
+                "コンパスの方向を確認中...",
+                "リピーターにより遅延中...",
+                "tpコマンドで座標を確認中...",
+                "エリトラで飛行中...",
+                "ダイヤモンドを採掘中...",
+                "トロッコをクラフト中...",
+                "チェストにアイテムを保管中...",
+                "ネザーゲートを設置中...",
+                "天沼靴を修繕中...",
+                "イザナミと対面中...",
+                "ジャガイモを焼いています...",
+                "村人に道を聞いています...",
+                "クリーパーと戦っています...",
+                "松明を置いています...",
+                "木を叩いています...",
+                "猫を見ています...",
+                "ポーションを飲んでいます...",
+                "エンダーチェストを開けています...",
+                "壊れかけの弓を壊しています..."
+            ];
+
+            // 最初にランダムなインデックスを一つ決める
+            let currentIndex = Math.floor(Math.random() * loadingMessages.length);
+
+            // ボタンの文字を書き換える専用の関数
+            const updateButtonMsg = (index) => {
+                stampButton.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${loadingMessages[index]}`;
+            };
+
+            // まず最初のメッセージを表示
+            updateButtonMsg(currentIndex);
+            
+            // ボタンを無効化して連打を防ぐ
+            stampButton.classList.add('disabled');
+            stampButton.style.pointerEvents = 'none';
+
+            // メッセージを切り替えるループ処理
+            setInterval(() => {
+                let nextIndex = Math.floor(Math.random() * loadingMessages.length);
+                
+                // もし前回と全く同じメッセージが選ばれてしまったら、1つ隣のメッセージにずらす（連続表示を防ぐ）
+                if (nextIndex === currentIndex) {
+                    nextIndex = (nextIndex + 1) % loadingMessages.length;
+                }
+                
+                currentIndex = nextIndex; // 現在の番号を更新
+                updateButtonMsg(currentIndex); // 画面に反映
+                
+            }, 500); // ここの数字を変えると、切り替わるスピードを調整できます（1000 = 1秒）
+        });
+    }
+});
     </script>
 {% endblock %}

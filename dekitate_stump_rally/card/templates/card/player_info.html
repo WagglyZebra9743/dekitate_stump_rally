@@ -7,8 +7,7 @@
     
     <div class="card shadow-sm mb-4 border-top border-warning border-4">
         <div class="card-body text-center p-5">
-            <h2 class="fw-bold text-dark mb-3">{{ player.last_known_name }}</h2>
-            
+            <h2 class="fw-bold text-dark mb-3"><img src="https://mc-heads.net/avatar/{{ current_player.uuid }}" alt="minecraftアイコン" width="64" height="64">{{ player.last_known_name }}</h2>
             <div class="display-3 text-warning fw-bold mb-3">
                 <i class="bi bi-p-circle-fill"></i>{{ player.points }} <span class="fs-4 text-muted">pt</span>
             </div>
@@ -36,7 +35,7 @@
                 <p class="text-muted mb-1">現在のあなたの順位</p>
                 <h1 class="display-4 fw-bold text-dark"><span class="text-danger">{{ rank }}</span> 位</h1>
             </div>
-            
+            <div class="text-center">{{same_rank}}</div>
             <div class="row text-center bg-light rounded p-3 mx-2">
                 <div class="col-6 border-end">
                     <p class="text-muted small mb-1">1つ上の順位のポイント</p>

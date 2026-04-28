@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'all_log.middleware.ErrorLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'dekitate_stump_rally.urls'
