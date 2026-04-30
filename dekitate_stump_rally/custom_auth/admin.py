@@ -6,11 +6,10 @@ from .models import CustomUser
 
 # ユーザー管理画面の見た目をカスタマイズするクラス
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'is_staff', 'is_superuser', 'is_active')
-    # fieldsets（入力フォームのグループ分け）を上書きして email を除外します
+    list_display = ('username', 'is_staff', 'is_superuser', 'is_active','can_call_staff')
+    list_editable = ('can_call_staff',)
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        # ↓元々はここに email がありましたが、削っています
         (_("Personal info"), {"fields": ("first_name", "last_name")}), 
         (_("Permissions"), {
             "fields": (

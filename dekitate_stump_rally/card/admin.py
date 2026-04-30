@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import RelatedOnlyFieldListFilter
 from .models import Stamp,Player,StampLog,UserProfile,SystemSetting
+from rangefilter.filters import DateTimeRangeFilter
 
 @admin.register(Stamp)
 class StampAdmin(admin.ModelAdmin):
@@ -65,10 +66,16 @@ class UserProfileAdmin(admin.ModelAdmin):
 @admin.register(StampLog)
 class StampLogAdmin(admin.ModelAdmin):
     list_display = ('stamp','get_player_name', 'first_pressed_at', 'last_pressed_at')
-    list_filter = ('stamp',)
-    search_fields = ('player__last_known_name', 'stamp__name')
+    search_fields = ('player__last_known_name', 'stamp__name', 'first_pressed_at', 'last_pressed_at')
 
-    # 👇 新しく「名前だけを取り出す専用の表示ルール」を作ります
+    list_filter = (
+        'stamp',
+        'player__last_known_name',
+        ('last_pressed_at', DateTimeRangeFilter),
+        ('first_pressed_at', DateTimeRangeFilter),
+    )
+
+    # 名前だけを取り出す専用の表示ルール
     @admin.display(description='プレイヤー')
     def get_player_name(self, obj):
         return obj.player.last_known_name

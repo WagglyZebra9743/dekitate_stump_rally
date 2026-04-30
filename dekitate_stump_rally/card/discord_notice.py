@@ -91,7 +91,7 @@ def send_stamp_notification(user, player, stamp,points_to_add, discord_user_id):
         register_error_log('送信エラー', f"Discordエラー: {res.text}", "", "debag,error,discord")
 
 
-def staff_call(user, player, discord_user_id):
+def discord_staff_call(user,player,discord_user_id):
     BOT_TOKEN = settings.DISCORD_BOT_TOKEN
     CHANNEL_ID = '1494160947168804934' 
     
@@ -131,7 +131,7 @@ def staff_call(user, player, discord_user_id):
 
         else:
             register_error_log('スレッド作成エラー',f"スレッドの作成に失敗しました{res.text}","","失敗,エラー,fail,error,server,discord")
-            return 'スレッド作成時にエラーが発生しました.<a href="https://discord.com/channels/1494160585129070692/1498565247458345011" target="_blank">#お問い合わせ総合</a>で連絡をしてください'
+            return 1
             
     url_add_member = f'https://discord.com/api/v10/channels/{thread_id}/thread-members/{discord_user_id}'
     requests.put(url_add_member, headers=headers)
@@ -141,34 +141,46 @@ def staff_call(user, player, discord_user_id):
     url_send_msg = f'https://discord.com/api/v10/channels/{thread_id}/messages'
     
     
-    embed_data = {
-        "content": "<@&1498576707173482546>",
-        "tts": False,
-        "embeds": [
+    # ★ 純粋な「Embed（埋め込み）の中身」だけを定義する
+    embed_content = {
+        "title": "🆘 運営を呼びました",
+        "description": "お問い合わせをしたい内容を入力してお待ちください",
+        "color": 16711680, # 赤色
+        "fields": [
             {
-            "id": 52580940,
-            "description": "お問い合わせをしたい内容を入力してお待ちください",
-            "fields": [
-                {
-                    "id": 875959258,
-                    "name": "24時間以内に反応がない場合",
-                    "value": "[こちら](https://www.dekitateserver.com/)から再度呼び出してください"
-                }
-            ],
-            "title": "運営を呼びました",
-            "color": 16711680
+                "name": "24時間経っても反応がない場合",
+                "value": "[こちら](https://www.dekitateserver.com/)から再度呼び出してください",
+                "inline": False
+            },
+            {
+                "name": "複数回呼んでも反応がない場合",
+                "value": "<#1498565247458345011>で連絡をしてください",
+                "inline": False
             }
-        ],
-        "components": [],
-        "actions": {},
-        "flags": 0
+        ]
     }
 
+    # ★ ここで「メンション（content）」と「埋め込み（embeds）」を合体させる
     data_msg = {
-        'content': "",
-        "embeds":[embed_data]
+        # メンションは content に入れる（roleメンションもこれで機能します）
+        'content': f"{player.last_known_name} が <@&1498576707173482546> を呼びました",
+        # embeds は「リスト」形式で渡す
+        'embeds': [embed_content]
     }
     
     res = requests.post(url_send_msg, headers=headers, json=data_msg)
     if res.status_code not in [200, 201]:
         register_error_log('送信エラー', f"Discordエラー: {res.text}", "", "debag,error,discord")
+        return 1
+    CHANNEL_ID = "1499218681039814799"
+    url_staff_call = f'https://discord.com/api/v10/channels/{CHANNEL_ID}/messages'
+
+    notify_data = {
+        # ここでロールをメンションし、作成したスレッドのリンクを貼る
+        'content': f"<@&1498576707173482546> {player.last_known_name} が運営を呼びました\n スレッド <#{thread_id}>を確認してください"
+    }
+    # 親チャンネルに送信（これでスタッフの通知が鳴る！）
+    res = requests.post(url_staff_call, headers=headers, json=notify_data)
+    if res.status_code not in [200, 201]:
+        register_error_log('送信エラー', f"Discordエラー: {res.text}", "", "debag,error,discord")
+        return 1

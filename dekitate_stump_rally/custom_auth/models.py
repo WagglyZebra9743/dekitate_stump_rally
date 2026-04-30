@@ -10,6 +10,8 @@ class CustomUser(AbstractUser):
     # DiscordのID（Discord連携時に自動で入る想定）
     discord_id = models.CharField('Discord ID', max_length=100, blank=True, null=True, unique=True)
 
+    can_call_staff = models.BooleanField('運営メンション可能か',default=True)
+
     note = models.TextField("メモ",blank=True,null=True)
 
     def __str__(self):

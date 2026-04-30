@@ -11,7 +11,6 @@
     <title>{% block title %}{% endblock %}できたてスタンプラリー</title>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     
     <nav class="navbar bg-success-subtle mb-4">
         <div class="container-fluid">
@@ -50,6 +49,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li class="text-center"><a class="dropdown-item" href="{% url 'stamp_add_view' %}">スタンプ追加</a></li>
                         <li class="text-center"><a class="dropdown-item" href="{% url 'admin:index' %}">管理者画面</a></li>
+                        <li class="text-center"><a class="dropdown-item" href="{% url 'staff_call' %}">運営呼び出し</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li class="text-center"><a class="btn btn-outline-danger btn-sm" href="{% url 'account_logout' %}">ログアウト</a></li>
                     </ul>
@@ -58,7 +58,7 @@
                 <a class="btn btn-outline-success btn-sm" href="{% provider_login_url 'discord' %}">ログイン(discord)</a>
                 {% endif %}
 
-                <a class="nav-link" href="https://discord.gg/ここに招待コード" target="_blank" rel="noopener noreferrer">
+                <a class="nav-link" href="https://discord.gg/aeVFZEFkDx" target="_blank" rel="noopener noreferrer">
                     <i class="bi bi-discord fs-2" style="color: #5865F2;"></i>
                 </a>
             </div>
@@ -74,16 +74,18 @@
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="mb-3">
+                        
                         <a href="https://dekitateserver.com/" target="_blank" class="text-white text-decoration-none mx-3">
-                            <i class="bi bi-globe"></i> でき鯖ホームページ
+                            <i class="bi bi-globe"></i> できたてサーバー（猫）ホームページ
                         </a>
-                        <a href="https://discord.gg/XXXXXXX" target="_blank" class="text-white text-decoration-none mx-3">
+                        <a href="https://discord.gg/aeVFZEFkDx" target="_blank" class="text-white text-decoration-none mx-3">
                             <i class="bi bi-discord"></i> お問い合わせ
                         </a>
                     </div>
                     <p class="small mb-0">
                         2026 できたてスタンプラリー<br>
-                        Created by WagglyZebra9743
+                        Created by WagglyZebra9743<br>
+                        本イベントはできたてサーバー（猫）運営と関係ありません
                     </p>
                 </div>
             </div>

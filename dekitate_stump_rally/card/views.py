@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.utils.safestring import mark_safe
 from .utils import get_minecraft_data
 from all_log.register import register_info_log,register_create_log,register_error_log,register_warn_log
-from .discord_notice import send_stamp_notification
+from .discord_notice import send_stamp_notification,discord_staff_call
 
 
 def rules(request):
@@ -223,7 +223,8 @@ def stamp_add_view(request):
                 stamp.author = request.user
                 stamp.save() 
                 register_create_log('スタンプ追加',f"以下のスタンプが{request.user}によって追加されました{stamp}","",f"スタンプ追加,stamp,成功,success,処理終了,end,{request.user}")
-                return redirect('stamp_success', pk=stamp.pk) # 成功ページへ！
+                request.session['just_created_stamp_id'] = stamp.pk
+                return redirect('stamp_success') # 成功ページへ！
             
             # 入力画面で「確認する」ボタンが押された場合
             else:
@@ -239,14 +240,28 @@ def stamp_add_view(request):
                 })
     else:
         form = StampForm()
-
-
     return render(request, 'card/stamp_add.html', {'form': form})
 
 
-def stamp_success_view(request, pk):
-    # IDを元に、データベースからたった今登録したスタンプの情報を取ってくる
-    stamp = get_object_or_404(Stamp, pk=pk)
+def stamp_success_view(request):
+    # スタンプ管理者グループに入っているかチェック
+    is_manager = request.user.is_authenticated and request.user.groups.filter(name='スタンプ管理者').exists()
+    
+    # 管理者じゃなかったらエラーページを表示
+    if not is_manager:
+        cached_mcid = request.session.get('saved_mcid', '')
+        user_info = f"({request.user})" if request.user.is_authenticated else ""
+        register_warn_log('権限不足', f"確認ページへのアクセスに失敗{user_info}",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
+        return render(request, 'card/permission_denied.html')
+    
+    stamp_id = request.session.pop('just_created_stamp_id', None)
+
+    if not stamp_id:
+        messages.error(request, "ページを開くときに問題が発生しました")
+        register_warn_log('権限不足', f"確認ページへのアクセスに失敗{user_info}",cached_mcid, "スタンプ追加,stamp,失敗,fail,中止,cancel")
+        return redirect('index')
+
+    stamp = get_object_or_404(Stamp, id=stamp_id)
     
     return render(request, 'card/stamp_success.html', {'stamp': stamp})
 
@@ -312,3 +327,71 @@ def player_info(request):
         'stamp_logs': stamp_logs,
     }
     return render(request, 'card/player_info.html', context)
+
+def staff_call(request):
+    _notice_text_ = "<a href='https://discord.com/channels/1494160585129070692/1498565247458345011' target='_blank'>#お問い合わせ総合</a>から問い合わせてください"
+    #キャッシュからmcidを取得
+    mcid = request.session.get('saved_mcid')
+        
+    #mcidが無かったら終わり
+    if not mcid:
+        messages.error(request, mark_safe(f"あらら！何かの問題が発生しました。{_notice_text_}"))
+        return redirect('index')
+
+    setting = SystemSetting.objects.first()
+    now = timezone.now() # 現在時刻を取得
+
+    if setting:
+        # 時間外の時の例外処理
+        if setting.event_start_at and now < setting.event_start_at or setting.event_end_at and now > setting.event_end_at:
+            messages.error(request, mark_safe(f"時間外です{_notice_text_}"))
+            register_error_log('運営呼び出し',"時間外",mcid,"運営呼び出し,discord,システム,system,エラー,error,キャンセル,中止,cancel,out of time")
+            return redirect('index')
+        
+    #MojangAPIからmcidとuuidを取得する
+    uuid_str, correct_name = get_minecraft_data(mcid)
+    if not uuid_str:
+        messages.error(request, mark_safe(f"{mcid} が見つかりません。{_notice_text_}"))
+        register_error_log('運営呼び出し',"処理中止:mcid未発見",mcid,f"運営呼び出し,discord,discord,システム,system,エラー,error,キャンセル,中止,cancel,not_found,{mcid}")
+        return redirect('index')
+        
+
+    #データを確認
+    player_check = Player.objects.filter(uuid=uuid_str).first()
+    if player_check and not player_check.is_enable:
+        messages.error(request, mark_safe(f"mcidに関する問題が発生しました。{_notice_text_}"))
+        register_warn_log('運営呼び出し',"処理中止:unavailable mcid",correct_name,f"運営呼び出し,discord,システム,system,警告,warn,キャンセル,中止,cancel,利用停止,ban,{correct_name},{uuid_str}")
+        return redirect('index')
+
+    player, created = Player.objects.get_or_create(
+        uuid=uuid_str,
+        defaults={'last_known_name': correct_name}
+    )
+    if created:
+        register_create_log('プレイヤー',f"新規プレイヤー:{correct_name}を登録)",correct_name,f"運営呼び出し,discord,システム,system,登録,create,プレイヤー,player,{correct_name},{uuid_str}")
+    # 名前が変わっていたら更新する
+    if player.last_known_name != correct_name:
+        register_info_log('プレイヤー',f"mcid更新{player.last_known_name}->{correct_name}",correct_name,f"運営呼び出し,discord,システム,system,更新,update,プレイヤー,player,{correct_name},{uuid_str}")
+        player.last_known_name = correct_name
+        player.save()
+        
+    if request.user.is_authenticated and player.user is None:
+        register_info_log('プレイヤー',f"discord:{request.user} = mcid:{correct_name}",correct_name,f"運営呼び出し,discord,システム,system,更新,update,プレイヤー,player,{correct_name},{uuid_str},{request.user}")
+        player.user = request.user
+        player.save()
+
+
+    if player.user and player.user.socialaccount_set.exists():
+        # DiscordのIDを取得
+        discord_account = player.user.socialaccount_set.filter(provider='Discord').first()
+        if discord_account:
+            discord_uid = discord_account.uid
+            rescode = discord_staff_call(player.user, player, discord_uid)
+            if(rescode==1):
+                messages.error(request, mark_safe(f"discordメッセージに関する問題が発生しました{_notice_text_}"))
+            else:
+                messages.success(request, "運営を呼びました。discordで確認してください")
+            return redirect('index')
+    
+    messages.error(request, mark_safe(f"あらら！何かの問題が発生しました。{_notice_text_}"))
+    return redirect('index')
