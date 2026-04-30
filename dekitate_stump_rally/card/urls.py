@@ -8,7 +8,8 @@ urlpatterns = [
     path("play/",views.play,name="play"),
     path("reward/",views.reward,name="reward"),
     path("stamp_add/",views.stamp_add_view,name="stamp_add_view"),
-    path("stamp_success/<int:pk>/", views.stamp_success_view, name="stamp_success"),
+    path("stamp_success/", views.stamp_success_view, name="stamp_success"),
     path("stamp_list",views.stamp_list,name="stamp_list"),
     path("player_info",views.player_info,name="player_info"),
+    path("staff_call",views.staff_call,name="staff_call")
 ]

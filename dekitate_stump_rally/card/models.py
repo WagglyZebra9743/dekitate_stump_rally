@@ -83,7 +83,7 @@ class StampLog(models.Model):
     stamp = models.ForeignKey(Stamp, on_delete=models.CASCADE)
     
     first_pressed_at = models.DateTimeField('初回取得日時', auto_now_add=True)
-    last_pressed_at = models.DateTimeField('最終取得日時', auto_now=True)
+    last_pressed_at = models.DateTimeField('最終取得日時', default=timezone.now)
 
     class Meta:
         # 1人のプレイヤーは、同じスタンプに対して1つの履歴しか持たない

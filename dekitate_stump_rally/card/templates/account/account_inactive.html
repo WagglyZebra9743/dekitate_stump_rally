@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}エラー| {% endblock %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 5rem;"></i>
+    <h1 class="mt-3">アクセスに失敗しました</h1>
+    <p class="text-secondary mt-3">
+        利用停止措置中です<br>
+        これが不具合だと思われる場合は<br>
+        Discordの<a href="https://discord.com/channels/1494160585129070692/1499234535043367014">#異議申し立て</a>で異議申し立てをしてください
+    </p>
+    <a href="/" class="btn btn-primary mt-4">ホームに戻る</a>
+</div>
+{% endblock %}
