@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-cle=oada4+$1m_k#akf635tprzm$h2e-s+ao9^6i8e+9-@h=6+'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['dekitate-stump-rally-1.onrender.com', '127.0.0.1', 'localhost']
 
