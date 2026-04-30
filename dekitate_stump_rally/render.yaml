@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: mymoviesapp
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn mymoviesapp.wsgi:application
+    autoDeploy: true
+    envVars:
+      - key: TMDB_API_KEY
+        fromSecret: TMDB_API_KEY
+      - key: DEBUG
+        fromSecret: DEBUG
+      - key: ALLOWED_HOSTS
+        fromSecret: ALLOWED_HOSTS
